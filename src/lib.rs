@@ -6,46 +6,28 @@ use promptpunch::{
     prompt::{read_markdown_prompt_from_file, InjectableData},
     PromptBuilder,
 };
-use sqlx::{Column, Row};
+use sqlx::{postgres::PgRow, PgPool};
 
 pub struct DatabaseOrbiter {
     llm: ChatGpt,
-    pool: sqlx::AnyPool,
+    pool: PgPool,
 }
 
 impl DatabaseOrbiter {
-    pub fn new(llm: ChatGpt, pool: sqlx::AnyPool) -> Self {
+    pub fn new(llm: ChatGpt, pool: PgPool) -> Self {
         Self { llm, pool }
     }
 
-    pub async fn request_db(&self, prompt: impl Display) -> anyhow::Result<Vec<Vec<String>>> {
+    pub async fn request_db(&self, prompt: impl Display) -> anyhow::Result<Vec<PgRow>> {
         let gpt_query = self.generate_sql(prompt).await?;
+
+        println!("Got query: {}", gpt_query);
         let rows = sqlx::query(&gpt_query)
             .fetch_all(&self.pool)
             .await
             .map_err(anyhow::Error::from)?;
 
-        if rows.is_empty() {
-            return Ok(vec![]);
-        }
-
-        let columns = rows[0]
-            .columns()
-            .into_iter()
-            .map(|col| col.name())
-            .collect::<Vec<_>>();
-
-        let mut result = vec![];
-        for row in &rows {
-            result.push(
-                (0..columns.len())
-                    .into_iter()
-                    .map(|idx| row.get::<String, _>(idx))
-                    .collect::<Vec<_>>(),
-            );
-        }
-
-        Ok(result)
+        Ok(rows)
     }
 
     async fn generate_sql(&self, prompt: impl Display) -> anyhow::Result<String> {
