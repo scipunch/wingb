@@ -109,7 +109,7 @@ pub fn router() -> Router<AppState> {
         .route("/logout", get(get::logout))
 }
 mod post {
-    use axum::{http::StatusCode, response::Redirect};
+    use axum::http::StatusCode;
 
     use super::*;
 
@@ -117,6 +117,7 @@ mod post {
         mut auth_session: AuthSession,
         Form(creds): Form<Credentials>,
     ) -> impl IntoResponse {
+        println!("Logging in");
         let user = match auth_session.authenticate(creds.clone()).await {
             Ok(Some(user)) => user,
             Ok(None) => {
@@ -125,7 +126,8 @@ mod post {
                     login_url = format!("{}?next={}", login_url, next);
                 };
 
-                return Redirect::to(&login_url).into_response();
+                println!("Redirecting to login url");
+                return hx::redirect(&login_url);
             }
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         };
@@ -134,12 +136,12 @@ mod post {
             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
         }
 
-        if let Some(ref next) = creds.next {
-            Redirect::to(next)
+        let to = if let Some(ref next) = creds.next {
+            next
         } else {
-            Redirect::to("/")
-        }
-        .into_response()
+            "/"
+        };
+        hx::redirect(to)
     }
 }
 
@@ -160,5 +162,24 @@ mod get {
             Ok(_) => Redirect::to("/login").into_response(),
             Err(_) => StatusCode::INTERNAL_SERVER_ERROR.into_response(),
         }
+    }
+}
+
+pub mod hx {
+    use std::fmt::Display;
+
+    use axum::{
+        body::Body,
+        http::{Response, StatusCode},
+        response::IntoResponse,
+    };
+
+    pub fn redirect(to: impl Display) -> Response<Body> {
+        (
+            StatusCode::MOVED_PERMANENTLY,
+            [("HX-Redirect", to.to_string())],
+            (),
+        )
+            .into_response()
     }
 }

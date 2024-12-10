@@ -13,22 +13,23 @@
         <div class="container mx-auto items-center">
             <!-- LLM Prompt Component -->
             <form class="p-2 md:p-4">
-                <div class="col-span-6 sm:col-span-3">
+                <div class="">
                     <label
-                        for="FirstName"
+                        for="username"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-200"
                     >
-                        username
+                        Username
                     </label>
 
                     <input
+                        autofocus=true
                         type="text"
                         id="username"
                         name="username"
-                        class="mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                        class="p-1 mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     />
                 </div>
-                <div class="col-span-6 sm:col-span-3">
+                <div class="mt-2">
                     <label
                         for="FirstName"
                         class="block text-sm font-medium text-gray-700 dark:text-gray-200"
@@ -40,13 +41,15 @@
                         type="password"
                         id="password"
                         name="password"
-                        class="mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+                        class="p-1 mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
                     />
                 </div>
                 <div class="block mb-4"></div>
                 <div class="flex items-center space-x-4">
                     <button
                         hx-post="/login"
+                        hx-indicator="#indicator"
+                        class="group relative inline-flex items-center overflow-hidden rounded bg-indigo-600 px-8 py-3 text-white focus:outline-none focus:ring active:bg-indigo-500"
                     >
                         <span class="absolute -end-full transition-all group-hover:end-4">
                             <svg
@@ -81,4 +84,3 @@
         </div>
     </body>
 </html>
->
