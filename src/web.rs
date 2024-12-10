@@ -9,8 +9,8 @@ use axum::{
 use axum_htmx::{AutoVaryLayer, HxRequest};
 use axum_template::{engine::Engine, Key, RenderHtml};
 use minijinja::Environment;
-use serde::{Deserialize, Serialize};
-use sqlx::AnyPool;
+use serde::Deserialize;
+
 use tokio::{net::TcpListener, time::sleep};
 
 use crate::DatabaseOrbiter;
