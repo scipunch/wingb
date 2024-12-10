@@ -6,8 +6,13 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.94"
 axum = "0.7.9"
+axum-htmx = { version = "0.6.0", features = ["auto-vary"] }
+axum-template = { version = "2.4.0", features = ["minijinja"] }
+build_html = "2.5.0"
 log = "0.4.22"
+minijinja = "2.5.0"
 promptpunch = { git = "https://github.com/scipunch/promptpunch", version = "0.1.0" }
+serde = { version = "1.0.215", features = ["derive"] }
 serde_json = "1.0.133"
 sqlx = { version = "0.8.2", features = ["any", "postgres", "runtime-tokio", "tls-rustls"] }
 sqlx-core = "0.8.2"

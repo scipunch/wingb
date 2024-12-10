@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Prompt and Table Layout</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.5.3/flowbite.min.css" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
+</head>
+<body class="bg-gray-100 p-6">
+    <div class="container mx-auto flex">
+        <!-- LLM Prompt Component -->
+        <form class="w-1/2 p-4">
+            <textarea id="prompt" name="prompt" rows="10" class="mt-1 block w-full p-2.5 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="Type your prompt here..."></textarea>
+            <button
+              hx-post="/generate"
+              hx-target="#sql-table"
+              class="mt-4 bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+            >
+              Submit
+            </button>
+        </form>
+
+
+        <!-- Table Component -->
+        <div class="w-1/2 p-4">
+            <div id="sql-table" class="overflow-x-auto shadow-md rounded-lg">
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.5.3/flowbite.min.js"></script>
+</body>
+</html>
+
