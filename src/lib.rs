@@ -23,6 +23,7 @@ pub struct DatabaseOrbiter {
 pub struct Table {
     head: Vec<String>,
     body: Vec<Vec<serde_json::Value>>,
+    sql_query: String,
 }
 
 impl DatabaseOrbiter {
@@ -31,10 +32,10 @@ impl DatabaseOrbiter {
     }
 
     pub async fn request_db(&self, prompt: impl Display) -> anyhow::Result<Table> {
-        let gpt_query = self.generate_sql(prompt).await?;
+        let sql_query = self.generate_sql(prompt).await?;
 
-        println!("Got query: {}", gpt_query);
-        let rows = sqlx::query(&gpt_query)
+        println!("Got query: {}", sql_query);
+        let rows = sqlx::query(&sql_query)
             .fetch_all(&self.pool)
             .await
             .map_err(anyhow::Error::from)?;
@@ -56,7 +57,11 @@ impl DatabaseOrbiter {
             .filter_map(Result::ok)
             .collect::<Vec<_>>();
 
-        Ok(Table { head, body })
+        Ok(Table {
+            head,
+            body,
+            sql_query,
+        })
     }
 
     async fn generate_sql(&self, prompt: impl Display) -> anyhow::Result<String> {
