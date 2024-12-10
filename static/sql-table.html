@@ -1,22 +1,25 @@
-<table class="min-w-full divide-y divide-gray-200">
-    <thead class="bg-gray-50">
-        <tr>
-            {% for value in head %}          
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {{ title }}
-                </th>
+<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+    <table
+        class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm dark:divide-gray-700 dark:bg-gray-800"
+    >
+        <thead class="ltr:text-left rtl:text-right">
+            <tr>
+                {% for title in head %}
+                <th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900 dark:text-white">{{ title }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+
+        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+            {% for row in body %}
+            <tr>
+                {% for value in row %}
+                <td class="whitespace-nowrap px-4 py-2 text-gray-700 dark:text-white">
+                    {{ value }}
+                </td>
+                {% endfor %}
+            </tr>
             {% endfor %}
-        </tr>
-    </thead>
-    <tbody class="bg-white divide-y divide-gray-200">
-        {% for row in body %}
-        <tr>
-            {% for value in row %}
-            <td class="px-6 py-4 whitespace-nowrap">
-              {{ value }}
-            </td>
-            {% endfor %}
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+        </tbody>
+    </table>
+</div>

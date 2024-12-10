@@ -17,7 +17,6 @@ use crate::DatabaseOrbiter;
 
 type AppEngine = Engine<Environment<'static>>;
 
-// Define your application shared state
 #[derive(Clone)]
 struct AppState {
     engine: AppEngine,
@@ -33,7 +32,6 @@ pub async fn serve(orbiter: DatabaseOrbiter) -> anyhow::Result<()> {
     let app = Router::new()
         .route("/", get(get_root))
         .route("/generate", post(post_generate))
-        // Create the application state
         .layer(AutoVaryLayer)
         .with_state(AppState {
             engine: Engine::from(jinja),
@@ -56,23 +54,15 @@ async fn post_generate(
     Form(data): Form<GeneratePrompt>,
 ) -> impl IntoResponse {
     println!("Got prompt data={:?}", data);
-    // let prompt = "Select all customers that were created on 12-09-2024. Add generated podcasts amount as well. Mark which customers started using new TTS provider. Add customer created_at date as well";
     let table = state.orbiter.request_db(&data.prompt).await.unwrap();
 
     RenderHtml(key, state.engine, table)
 }
 
-// Our handler differentiates full-page GET requests from htmx-based ones by looking at the `hx-request`
-// requestheader.
-//
-// The middleware sees the usage of the `HxRequest` extractor and automatically adds the
-// `Vary: hx-request` response header.
 async fn get_root(HxRequest(hx_request): HxRequest) -> Html<&'static str> {
     if hx_request {
-        // For htmx-based GET request, it returns a partial page update
         sleep(Duration::from_secs(3)).await;
         return Html("htmx response");
     }
-    // While for a normal GET request, it returns the whole page
     Html(std::include_str!("../static/index.html"))
 }
