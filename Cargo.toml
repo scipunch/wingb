@@ -6,9 +6,11 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.94"
 axum = "0.7.9"
+log = "0.4.22"
 promptpunch = { git = "https://github.com/scipunch/promptpunch", version = "0.1.0" }
 serde_json = "1.0.133"
-sqlx = { version = "0.8.2", features = ["postgres", "time", "bigdecimal", "runtime-tokio", "tls-rustls"] }
+sqlx = { version = "0.8.2", features = ["any", "postgres", "runtime-tokio", "tls-rustls"] }
+sqlx-core = "0.8.2"
 tokio = { version = "1.42.0", features = ["full"] }
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
