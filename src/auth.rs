@@ -20,8 +20,8 @@ impl User {
     pub fn from_env() -> Self {
         Self {
             id: 1,
-            username: "admin".to_string(),
-            password: "password".to_string(),
+            username: std::env::var("USER_NAME").unwrap(),
+            password: std::env::var("USER_PASSWORD").unwrap(),
         }
     }
 }
