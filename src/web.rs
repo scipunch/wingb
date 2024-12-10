@@ -10,7 +10,10 @@ use axum_htmx::{AutoVaryLayer, HxRequest};
 use axum_template::{engine::Engine, Key, RenderHtml};
 use minijinja::Environment;
 use serde::{Deserialize, Serialize};
+use sqlx::AnyPool;
 use tokio::{net::TcpListener, time::sleep};
+
+use crate::DatabaseOrbiter;
 
 type AppEngine = Engine<Environment<'static>>;
 
@@ -18,9 +21,10 @@ type AppEngine = Engine<Environment<'static>>;
 #[derive(Clone)]
 struct AppState {
     engine: AppEngine,
+    orbiter: DatabaseOrbiter,
 }
 
-pub async fn serve() -> anyhow::Result<()> {
+pub async fn serve(orbiter: DatabaseOrbiter) -> anyhow::Result<()> {
     let mut jinja = Environment::new();
     jinja
         .add_template("/generate", std::include_str!("../static/sql-table.html"))
@@ -33,6 +37,7 @@ pub async fn serve() -> anyhow::Result<()> {
         .layer(AutoVaryLayer)
         .with_state(AppState {
             engine: Engine::from(jinja),
+            orbiter,
         });
 
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
@@ -45,21 +50,14 @@ struct GeneratePrompt {
     prompt: String,
 }
 
-#[derive(Serialize)]
-struct SqlTable<'a> {
-    head: Vec<&'a str>,
-    body: Vec<Vec<&'a str>>,
-}
-
 async fn post_generate(
     State(state): State<AppState>,
     Key(key): Key,
     Form(data): Form<GeneratePrompt>,
 ) -> impl IntoResponse {
     println!("Got prompt data={:?}", data);
-    let body = vec![vec!["1", "2", "3"], vec!["4", "5", "6"]];
-    let head = vec!["foo", "bar", "baz"];
-    let table = SqlTable { head, body };
+    // let prompt = "Select all customers that were created on 12-09-2024. Add generated podcasts amount as well. Mark which customers started using new TTS provider. Add customer created_at date as well";
+    let table = state.orbiter.request_db(&data.prompt).await.unwrap();
 
     RenderHtml(key, state.engine, table)
 }

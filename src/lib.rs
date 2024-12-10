@@ -8,13 +8,21 @@ use promptpunch::{
     prompt::{read_markdown_prompt_from_file, InjectableData},
     PromptBuilder,
 };
+use serde::Serialize;
 use serde_json::Value;
 use sqlx::{any::AnyRow, AnyPool, Column, Row};
 use sqlx_core::any::AnyValueKind;
 
+#[derive(Clone)]
 pub struct DatabaseOrbiter {
     llm: ChatGpt,
     pool: AnyPool,
+}
+
+#[derive(Debug, Default, Serialize)]
+pub struct Table {
+    head: Vec<String>,
+    body: Vec<Vec<serde_json::Value>>,
 }
 
 impl DatabaseOrbiter {
@@ -22,7 +30,7 @@ impl DatabaseOrbiter {
         Self { llm, pool }
     }
 
-    pub async fn request_db(&self, prompt: impl Display) -> anyhow::Result<Vec<serde_json::Value>> {
+    pub async fn request_db(&self, prompt: impl Display) -> anyhow::Result<Table> {
         let gpt_query = self.generate_sql(prompt).await?;
 
         println!("Got query: {}", gpt_query);
@@ -32,24 +40,23 @@ impl DatabaseOrbiter {
             .map_err(anyhow::Error::from)?;
 
         if rows.is_empty() {
-            return Ok(vec![]);
+            return Ok(Table::default());
         }
 
-        let columns = rows[0].columns();
-        println!(
-            "{}",
-            columns
-                .iter()
-                .map(|col| col.name())
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
+        let head = rows[0]
+            .columns()
+            .iter()
+            .map(|col| col.name().to_string())
+            .collect::<Vec<_>>();
+        println!("{}", head.join(", "));
 
-        for row in &rows {
-            println!("{:?}", any_row_to_json(row));
-        }
+        let body = rows
+            .iter()
+            .map(any_row_to_json)
+            .filter_map(Result::ok)
+            .collect::<Vec<_>>();
 
-        Ok(vec![])
+        Ok(Table { head, body })
     }
 
     async fn generate_sql(&self, prompt: impl Display) -> anyhow::Result<String> {
@@ -72,9 +79,9 @@ impl DatabaseOrbiter {
     }
 }
 
-fn any_row_to_json(row: &AnyRow) -> anyhow::Result<serde_json::Value> {
-    let mut result = serde_json::Map::new();
-    for ((name, _), value) in row.column_names.iter().zip(&row.values) {
+fn any_row_to_json(row: &AnyRow) -> anyhow::Result<Vec<serde_json::Value>> {
+    let mut result = vec![];
+    for value in &row.values {
         let value = match &value.kind {
             AnyValueKind::BigInt(v) => serde_json::json!(v),
             AnyValueKind::Null(_) => Value::Null,
@@ -87,8 +94,7 @@ fn any_row_to_json(row: &AnyRow) -> anyhow::Result<serde_json::Value> {
             AnyValueKind::Blob(v) => serde_json::json!(v),
             _ => anyhow::bail!("Got unexpected value kind"),
         };
-        result.insert(name.to_string(), value);
+        result.push(value);
     }
-    let value = serde_json::Value::from(result);
-    Ok(value)
+    Ok(result)
 }

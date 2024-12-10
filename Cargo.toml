@@ -8,7 +8,6 @@ anyhow = "1.0.94"
 axum = "0.7.9"
 axum-htmx = { version = "0.6.0", features = ["auto-vary"] }
 axum-template = { version = "2.4.0", features = ["minijinja"] }
-build_html = "2.5.0"
 log = "0.4.22"
 minijinja = "2.5.0"
 promptpunch = { git = "https://github.com/scipunch/promptpunch", version = "0.1.0" }
