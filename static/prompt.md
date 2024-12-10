@@ -4,9 +4,9 @@ Answer the questions by providing raw SQL code that is compatible with the Postg
 Do not format it as markdown (skip ```sql ``` blocks).
 Each timestamp field in select output should be wrapped in the following function:
 ```sql
-COALESCE(to_char(<datetime or timestamp field>, 'MM-DD-YYYY HH24:MI:SS'), '')
+COALESCE(to_char(<datetime or timestamp field>, 'DD-MM-YYYY HH24:MI:SS'), '')
 ```
-You can write only select queries, any other are forbidden
+You can write only select queries, any other are forbidden. Assume that dates in prompts and db have the same format.
 
 
 # User 
