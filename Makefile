@@ -11,6 +11,8 @@ run:
 watch:
 	cargo watch --quiet  --watch static --watch templates --watch src --shell 'shuttle run --external'
 
+docker-build:
+	docker build -t wingb .
 
 deploy: check
 	shuttle deploy
