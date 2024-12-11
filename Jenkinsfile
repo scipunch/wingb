@@ -16,7 +16,7 @@ pipeline {
         stage('🚀 Deploy') {
             steps {
                 echo 'Deploying....'
-                sh 'docker ps | grep wingb | awk \'{print $1}\' | xargs -r -I {} docker stop {}'
+                sh "docker ps | grep wingb | awk '{print $1}' | xargs -r -I {} docker stop {}"
                 sh 'docker run --env-file $DOTENV_FILE --detach --publish 8010:8000 wingb:latest'
             }
         }
