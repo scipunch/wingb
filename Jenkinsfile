@@ -16,7 +16,7 @@ pipeline {
         stage('🚀 Deploy') {
             steps {
                 echo 'Deploying....'
-                sh 'docker run --env-file $DOTENV_FILE wingb:latest'
+                sh 'docker run --env-file $DOTENV_FILE --detach wingb:latest'
             }
         }
     }
