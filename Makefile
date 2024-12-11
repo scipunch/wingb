@@ -9,7 +9,7 @@ run:
 	cargo run
 
 watch:
-	cargo watch --quiet  --watch static --watch templates --watch src --shell 'shuttle run --external --port 8000'
+	cargo watch --quiet  --watch static --watch templates --watch src --shell 'shuttle run --external'
 
 
 deploy: check
