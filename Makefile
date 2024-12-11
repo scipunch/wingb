@@ -5,4 +5,4 @@ run:
 	cargo run
 
 watch:
-	cargo watch --watch static --watch src --exec run
+	cargo watch --watch static --watch templates --watch src --exec run
