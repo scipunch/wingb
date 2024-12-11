@@ -13,6 +13,10 @@ async fn main() -> anyhow::Result<()> {
         .with(EnvFilter::from_default_env())
         .init();
 
+    std::panic::set_hook(Box::new(
+        |panic| tracing::error!(%panic, "process panicked"),
+    ));
+
     sqlx::any::install_default_drivers();
     let db_url = std::env::var("DATABASE_URL").expect("Failed to get DATABASE_URL");
 
