@@ -110,6 +110,7 @@ pub fn router() -> Router<AppState> {
 }
 mod post {
     use axum::http::StatusCode;
+    use tracing::{info, warn};
 
     use super::*;
 
@@ -117,16 +118,15 @@ mod post {
         mut auth_session: AuthSession,
         Form(creds): Form<Credentials>,
     ) -> impl IntoResponse {
-        println!("Logging in");
+        info!("Logging in");
         let user = match auth_session.authenticate(creds.clone()).await {
             Ok(Some(user)) => user,
             Ok(None) => {
+                warn!("Wrong credentials: {:?}", creds);
                 let mut login_url = "/login".to_string();
                 if let Some(next) = creds.next {
                     login_url = format!("{}?next={}", login_url, next);
                 };
-
-                println!("Redirecting to login url");
                 return hx::redirect(&login_url);
             }
             Err(_) => return StatusCode::INTERNAL_SERVER_ERROR.into_response(),

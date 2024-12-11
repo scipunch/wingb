@@ -14,6 +14,7 @@ use serde::Serialize;
 use serde_json::Value;
 use sqlx::{any::AnyRow, AnyPool, Column, Row};
 use sqlx_core::any::AnyValueKind;
+use tracing::info;
 
 #[derive(Clone)]
 pub struct DatabaseOrbiter {
@@ -35,8 +36,7 @@ impl DatabaseOrbiter {
 
     pub async fn request_db(&self, prompt: impl Display) -> anyhow::Result<Table> {
         let sql_query = self.generate_sql(prompt).await?;
-
-        println!("Got query: {}", sql_query);
+        info!("Generated sql_query: {}", sql_query);
         let rows = sqlx::query(&sql_query)
             .fetch_all(&self.pool)
             .await
@@ -51,7 +51,7 @@ impl DatabaseOrbiter {
             .iter()
             .map(|col| col.name().to_string())
             .collect::<Vec<_>>();
-        println!("{}", head.join(", "));
+        info!("Got colummns: {} with {} rows", head.join(", "), rows.len());
 
         let body = rows
             .iter()

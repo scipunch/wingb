@@ -2,12 +2,13 @@ use askama_axum::Template;
 use axum::{
     extract::State,
     response::IntoResponse,
-    routing::{get, post},
-    Form, Router,
+    routing::{get, post, Router},
+    Form,
 };
 use axum_htmx::AutoVaryLayer;
 use serde::Deserialize;
 use tower_sessions::MemoryStore;
+use tracing::info;
 
 use crate::{
     app_state::AppState,
@@ -21,9 +22,8 @@ use axum_login::{
 };
 
 use time::Duration;
-use tokio::net::TcpListener;
 
-pub async fn serve(orbiter: DatabaseOrbiter) -> anyhow::Result<()> {
+pub async fn create_app(orbiter: DatabaseOrbiter) -> anyhow::Result<Router> {
     let session_store = MemoryStore::default();
     let key = tower_sessions::cookie::Key::generate();
 
@@ -44,9 +44,7 @@ pub async fn serve(orbiter: DatabaseOrbiter) -> anyhow::Result<()> {
         .layer(auth_layer)
         .with_state(AppState { orbiter });
 
-    let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
-    Ok(())
+    Ok(app)
 }
 
 #[derive(Debug, Deserialize)]
@@ -76,6 +74,7 @@ async fn post_generate(
     State(state): State<AppState>,
     Form(data): Form<GeneratePrompt>,
 ) -> impl IntoResponse {
+    info!(data.prompt);
     let table = state.orbiter.request_db(&data.prompt).await.unwrap();
     PromptResponse::from(table).render().unwrap()
 }
