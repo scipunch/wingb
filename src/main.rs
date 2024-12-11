@@ -11,6 +11,13 @@ async fn main(
         .get("DATABASE_URL")
         .expect("Failed to get DATABASE_URL");
 
+    std::env::set_var(
+        "OPENAI_API_KEY",
+        secrets
+            .get("OPENAI_API_KEY")
+            .expect("Failed to get OPENAI_API_KEY"),
+    );
+
     let llm = ChatGpt::from_env().with_model(ChatGptModel::Mini4o);
     let pool = AnyPool::connect(&db_url)
         .await

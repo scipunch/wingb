@@ -36,7 +36,7 @@ impl DatabaseOrbiter {
 
     pub async fn request_db(&self, prompt: impl Display) -> anyhow::Result<Table> {
         let sql_query = self.generate_sql(prompt).await?;
-        info!("Generated sql_query: {}", sql_query);
+        info!("Generated sql_query: {}", sql_query.replace("/n", ""));
         let rows = sqlx::query(&sql_query)
             .fetch_all(&self.pool)
             .await
