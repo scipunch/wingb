@@ -26,7 +26,7 @@ async fn main() -> anyhow::Result<()> {
         Ok(host) => host,
         Err(_) => {
             tracing::warn!("WINGB_HOST env var not set, using default");
-            "localhost:8080".to_string()
+            "0.0.0.0:8080".to_string()
         }
     };
     tracing::info!("Starting app on {}", host);
