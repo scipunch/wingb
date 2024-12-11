@@ -5,7 +5,7 @@ pipeline {
         stage('📦 Build') {
             steps {
                 echo 'Building..'
-                docker build -t wingb .
+                sh 'make docker-build'
             }
         }
         stage('🚀 Deploy') {
