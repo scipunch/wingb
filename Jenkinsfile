@@ -2,17 +2,13 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
+        stage('📦 Build') {
             steps {
                 echo 'Building..'
+                docker build -t wingb .
             }
         }
-        stage('Test') {
-            steps {
-                echo 'Testing..'
-            }
-        }
-        stage('Deploy') {
+        stage('🚀 Deploy') {
             steps {
                 echo 'Deploying....'
             }
