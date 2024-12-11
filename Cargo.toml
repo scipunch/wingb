@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.94"
 askama = { version = "0.12.1" }
+askama_axum = "0.4.0"
 async-trait = "0.1.83"
 axum = "0.7.9"
 axum-htmx = { version = "0.6.0", features = ["auto-vary"] }

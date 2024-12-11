@@ -149,8 +149,6 @@ mod get {
     use askama::Template;
     use axum::{http::StatusCode, response::Redirect};
 
-    use crate::web::HtmlTemplate;
-
     use super::*;
 
     #[derive(Template)]
@@ -159,7 +157,7 @@ mod get {
 
     pub async fn login() -> impl IntoResponse {
         let login = Login {};
-        HtmlTemplate(login)
+        login
     }
 
     pub async fn logout(mut auth_session: AuthSession) -> impl IntoResponse {
