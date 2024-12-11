@@ -1,19 +1,18 @@
+use askama::Template;
 use axum::{
     extract::State,
-    response::{Html, IntoResponse},
+    response::IntoResponse,
     routing::{get, post},
     Form, Router,
 };
-use axum_htmx::{AutoVaryLayer, HxRequest};
-use axum_template::{engine::Engine, Key, RenderHtml};
-use minijinja::Environment;
+use axum_htmx::AutoVaryLayer;
 use serde::Deserialize;
 use tower_sessions::MemoryStore;
 
 use crate::{
     app_state::AppState,
     auth::{self, Backend, User},
-    DatabaseOrbiter,
+    DatabaseOrbiter, Table,
 };
 use axum_login::{
     login_required,
@@ -22,14 +21,9 @@ use axum_login::{
 };
 
 use time::Duration;
-use tokio::{net::TcpListener, time::sleep};
+use tokio::net::TcpListener;
 
 pub async fn serve(orbiter: DatabaseOrbiter) -> anyhow::Result<()> {
-    let mut jinja = Environment::new();
-    jinja
-        .add_template("/generate", std::include_str!("../static/sql-table.html"))
-        .unwrap();
-
     let session_store = MemoryStore::default();
     let key = tower_sessions::cookie::Key::generate();
 
@@ -48,10 +42,7 @@ pub async fn serve(orbiter: DatabaseOrbiter) -> anyhow::Result<()> {
         .route_layer(login_required!(Backend, login_url = "/login"))
         .merge(auth::router())
         .layer(auth_layer)
-        .with_state(AppState {
-            engine: Engine::from(jinja),
-            orbiter,
-        });
+        .with_state(AppState { orbiter });
 
     let listener = TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
@@ -63,21 +54,37 @@ struct GeneratePrompt {
     prompt: String,
 }
 
-async fn post_generate(
-    State(state): State<AppState>,
-    Key(key): Key,
-    Form(data): Form<GeneratePrompt>,
-) -> impl IntoResponse {
-    println!("Got prompt data={:?}", data);
-    let table = state.orbiter.request_db(&data.prompt).await.unwrap();
-
-    RenderHtml(key, state.engine, table)
+#[derive(Template)]
+#[template(path = "sql-table.html")]
+struct PromptResponse {
+    head: Vec<String>,
+    body: Vec<Vec<serde_json::Value>>,
+    sql_query: String,
 }
 
-async fn get_root(HxRequest(hx_request): HxRequest) -> Html<&'static str> {
-    if hx_request {
-        sleep(std::time::Duration::from_secs(3)).await;
-        return Html("htmx response");
+impl From<Table> for PromptResponse {
+    fn from(value: Table) -> Self {
+        Self {
+            head: value.head,
+            body: value.body,
+            sql_query: value.sql_query,
+        }
     }
-    Html(std::include_str!("../static/index.html"))
+}
+
+async fn post_generate(
+    State(state): State<AppState>,
+    Form(data): Form<GeneratePrompt>,
+) -> impl IntoResponse {
+    let table = state.orbiter.request_db(&data.prompt).await.unwrap();
+    PromptResponse::from(table).render().unwrap()
+}
+
+#[derive(Template)]
+#[template(path = "index.html")]
+struct Root {}
+
+async fn get_root() -> impl IntoResponse {
+    let root = Root {};
+    root.render().unwrap()
 }

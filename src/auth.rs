@@ -146,15 +146,18 @@ mod post {
 }
 
 mod get {
-    use axum::{
-        http::StatusCode,
-        response::{Html, Redirect},
-    };
+    use askama::Template;
+    use axum::{http::StatusCode, response::Redirect};
 
     use super::*;
 
+    #[derive(Template)]
+    #[template(path = "login.html")]
+    struct Login {}
+
     pub async fn login() -> impl IntoResponse {
-        Html(std::include_str!("web/pages/login.html"))
+        let login = Login {};
+        login.render().unwrap()
     }
 
     pub async fn logout(mut auth_session: AuthSession) -> impl IntoResponse {
