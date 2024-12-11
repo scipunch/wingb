@@ -1,22 +1,12 @@
 use promptpunch::{llm::chat_gpt::ChatGptModel, prelude::*};
 use sqlx::AnyPool;
+use tokio::net::TcpListener;
 use wingb::{web, DatabaseOrbiter};
 
-#[shuttle_runtime::main]
-async fn main(
-    #[shuttle_runtime::Secrets] secrets: shuttle_runtime::SecretStore,
-) -> shuttle_axum::ShuttleAxum {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     sqlx::any::install_default_drivers();
-    let db_url = secrets
-        .get("DATABASE_URL")
-        .expect("Failed to get DATABASE_URL");
-
-    std::env::set_var(
-        "OPENAI_API_KEY",
-        secrets
-            .get("OPENAI_API_KEY")
-            .expect("Failed to get OPENAI_API_KEY"),
-    );
+    let db_url = std::env::var("DATABASE_URL").expect("Failed to get DATABASE_URL");
 
     let llm = ChatGpt::from_env().with_model(ChatGptModel::Mini4o);
     let pool = AnyPool::connect(&db_url)
@@ -24,16 +14,18 @@ async fn main(
         .expect("Failed to create pool");
     let orbiter = DatabaseOrbiter::new(llm, pool);
 
-    std::env::set_var(
-        "USER_NAME",
-        secrets.get("USER_NAME").expect("Failed to get USER_NAME"),
-    );
-    std::env::set_var(
-        "USER_PASSWORD",
-        secrets
-            .get("USER_PASSWORD")
-            .expect("Failed to get USER_PASSWORD"),
-    );
+    let host = match std::env::var("WINGB_HOST") {
+        Ok(host) => host,
+        Err(_) => {
+            tracing::warn!("WINGB_HOST env var not set, using default");
+            "localhost:8080".to_string()
+        }
+    };
+    tracing::info!("Starting app on {}", host);
+
     let app = web::create_app(orbiter).await?;
-    Ok(app.into())
+    let listener = TcpListener::bind(host).await?;
+    axum::serve(listener, app).await?;
+
+    Ok(())
 }
