@@ -1,0 +1,67 @@
+{% extends "layout/base.html" %}
+
+{% block content %}
+<form class="p-2 md:p-4">
+    <div class="">
+        <label
+            for="username"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
+            Username
+        </label>
+
+        <input
+            autofocus=true
+            type="text"
+            id="username"
+            name="username"
+            class="p-1 mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+        />
+    </div>
+    <div class="mt-2">
+        <label
+            for="FirstName"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-200"
+        >
+            Password
+        </label>
+
+        <input
+            type="password"
+            id="password"
+            name="password"
+            class="p-1 mt-1 w-full rounded-md border-gray-200 bg-white text-sm text-gray-700 shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200"
+        />
+    </div>
+    <div class="block mb-4"></div>
+    <div class="flex items-center space-x-4">
+        <button
+            hx-post="/login"
+            hx-indicator="#indicator"
+            class="group relative inline-flex items-center overflow-hidden rounded bg-indigo-600 px-8 py-3 text-white focus:outline-none focus:ring active:bg-indigo-500"
+        >
+            <span class="absolute -end-full transition-all group-hover:end-4">
+                <svg
+                    class="size-5 rtl:rotate-180"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                >
+                    <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17 8l4 4m0 0l-4 4m4-4H3"
+                    />
+                </svg>
+            </span>
+
+            <span class="text-sm font-medium transition-all group-hover:me-4"> Submit </span>
+        </button>
+        <div id="indicator" class="htmx-indicator">
+            <h1 class="text-white">Loading...</h1>
+        </div>
+    </div>
+</form>
+{% endblock content %}

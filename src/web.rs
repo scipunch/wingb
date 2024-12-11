@@ -55,7 +55,7 @@ struct GeneratePrompt {
 }
 
 #[derive(Template)]
-#[template(path = "sql-table.html")]
+#[template(path = "component/sql-table.html")]
 struct PromptResponse {
     head: Vec<String>,
     body: Vec<Vec<serde_json::Value>>,
@@ -81,7 +81,7 @@ async fn post_generate(
 }
 
 #[derive(Template)]
-#[template(path = "index.html")]
+#[template(path = "page/index.html")]
 struct Root {}
 
 async fn get_root() -> impl IntoResponse {

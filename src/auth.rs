@@ -152,7 +152,7 @@ mod get {
     use super::*;
 
     #[derive(Template)]
-    #[template(path = "login.html")]
+    #[template(path = "page/login.html")]
     struct Login {}
 
     pub async fn login() -> impl IntoResponse {
