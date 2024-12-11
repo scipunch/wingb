@@ -9,8 +9,14 @@ run:
 	cargo run
 
 watch:
-	cargo watch --watch static --watch templates --watch src --exec run
+	cargo watch --quiet  --watch static --watch templates --watch src --shell 'shuttle run --external --port 8000'
 
 
 deploy: check
 	shuttle deploy
+
+logs:
+	shuttle logs
+
+logs-error:
+	shuttle logs | grep "ERROR" | tail -n 50

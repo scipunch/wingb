@@ -1,6 +1,6 @@
 use promptpunch::{llm::chat_gpt::ChatGptModel, prelude::*};
 use sqlx::AnyPool;
-use wingdb::{web, DatabaseOrbiter};
+use wingb::{web, DatabaseOrbiter};
 
 #[shuttle_runtime::main]
 async fn main(
