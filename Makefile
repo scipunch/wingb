@@ -1,6 +1,10 @@
 check:
 	cargo check
 
+precommit:
+	cargo fmt
+	cargo clippy
+
 run:
 	cargo run
 

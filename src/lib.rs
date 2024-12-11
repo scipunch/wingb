@@ -1,5 +1,3 @@
-mod app_state;
-mod auth;
 pub mod web;
 
 use std::fmt::Display;
