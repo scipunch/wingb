@@ -12,7 +12,7 @@ watch:
 	cargo watch --quiet  --watch static --watch templates --watch src --shell 'shuttle run --external'
 
 docker-build:
-	docker build --cpu-quota 100000 --tag wingb .
+	docker build --cpu-shares 2 --cpu-quota 80000 --tag wingb .
 
 deploy: check
 	shuttle deploy
