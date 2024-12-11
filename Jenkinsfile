@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    
+    environment {
+        DOTENV_FILE = credentials('podcastio-wingb-env')
+    }
 
     stages {
         stage('📦 Build') {
@@ -8,9 +12,11 @@ pipeline {
                 sh 'make docker-build'
             }
         }
+        
         stage('🚀 Deploy') {
             steps {
                 echo 'Deploying....'
+                sh 'docker run --env-file $DOTENV_FILE wingb:latest'
             }
         }
     }
