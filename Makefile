@@ -19,7 +19,7 @@ ifndef DOTENV_FILE
 	$(error "DOTENV_FILE is not set, exiting")
 endif
 	docker ps | grep wingb | awk '{print $$1}' | xargs -r -I {} docker stop {}
-	docker run --env-file $$DOTENV_FILE --detach --publish 8010:8080 wingb:latest
+	docker run --env-file $$DOTENV_FILE --detach --network host wingb:latest
 
 deploy: check
 	shuttle deploy
