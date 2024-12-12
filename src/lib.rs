@@ -5,7 +5,7 @@ use std::fmt::Display;
 use promptpunch::{
     llm::LlmProvider,
     prelude::ChatGpt,
-    prompt::{read_markdown_prompt, read_markdown_prompt_from_file, InjectableData},
+    prompt::{read_markdown_prompt, InjectableData},
     PromptBuilder,
 };
 use serde::Serialize;
