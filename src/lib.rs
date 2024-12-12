@@ -5,7 +5,7 @@ use std::fmt::Display;
 use promptpunch::{
     llm::LlmProvider,
     prelude::ChatGpt,
-    prompt::{read_markdown_prompt_from_file, InjectableData},
+    prompt::{read_markdown_prompt, read_markdown_prompt_from_file, InjectableData},
     PromptBuilder,
 };
 use serde::Serialize;
@@ -73,8 +73,8 @@ impl DatabaseOrbiter {
         "customer_tts_provider_log exists for each customer by default. The default tts_provider is Google (1), the new one provider is Cartesia (2). The active tts_provider for the customer - latest row in this table"
     )];
         let prompt = PromptBuilder::default()
-            .messages(read_markdown_prompt_from_file(
-                "static/prompt.md",
+            .messages(read_markdown_prompt(
+                std::include_str!("../static/prompt.md").lines(),
                 &to_inject,
             )?)
             .build()?;
