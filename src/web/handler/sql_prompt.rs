@@ -15,6 +15,8 @@ pub fn router() -> Router<AppState> {
 }
 
 mod post {
+    use axum::http::StatusCode;
+
     use super::*;
     #[derive(Debug, Deserialize)]
     pub struct GeneratePrompt {
@@ -34,8 +36,14 @@ mod post {
         Form(data): Form<GeneratePrompt>,
     ) -> impl IntoResponse {
         info!(data.prompt);
-        let table = state.orbiter.request_db(&data.prompt).await.unwrap();
-        PromptResponse::from(table)
+        match state.orbiter.request_db(&data.prompt).await {
+            Ok(table) => PromptResponse::from(table).into_response(),
+            Err(err) => (
+                StatusCode::BAD_REQUEST,
+                format!("Failed to process prompt with {:?}", err),
+            )
+                .into_response(),
+        }
     }
 
     impl From<Table> for PromptResponse {
