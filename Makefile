@@ -12,7 +12,7 @@ watch:
 	cargo watch --quiet  --watch static --watch templates --watch src --shell 'shuttle run --external'
 
 docker-build:
-	docker build --tag wingb .
+	docker build --tag wingb:latest .
 
 docker-run:
 ifndef DOTENV_FILE
