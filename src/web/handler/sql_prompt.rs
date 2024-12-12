@@ -38,11 +38,14 @@ mod post {
         info!(data.prompt);
         match state.orbiter.request_db(&data.prompt).await {
             Ok(table) => PromptResponse::from(table).into_response(),
-            Err(err) => (
-                StatusCode::BAD_REQUEST,
-                format!("Failed to process prompt with {:?}", err),
-            )
-                .into_response(),
+            Err(err) => {
+                tracing::error!(%err, "Failed to process prompt with");
+                (
+                    StatusCode::BAD_REQUEST,
+                    format!("Failed to process prompt with {:?}", err),
+                )
+                    .into_response()
+            }
         }
     }
 
