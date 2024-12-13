@@ -19,6 +19,6 @@ RUN cargo build --release
 FROM debian:bookworm-slim AS runtime
 WORKDIR app
 RUN apt-get update -y \
-    && apt-get install libssl-dev -y
+    && apt-get install libssl-dev ca-certificates -y
 COPY --from=builder /app/target/release/wingb /usr/local/bin/app
 CMD ["/usr/local/bin/app"]
