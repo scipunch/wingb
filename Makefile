@@ -6,10 +6,10 @@ precommit:
 	cargo clippy
 
 run:
-	cargo run
+	cargo run --bin wingb
 
 watch:
-	cargo watch --quiet  --watch static --watch templates --watch src --shell 'shuttle run --external'
+	cargo watch --quiet  --watch static --watch templates --watch src --shell 'cargo run --bin wingb'
 
 docker-build:
 	docker build --tag wingb:latest .
