@@ -1,30 +1,37 @@
-<div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-    <table
-        class="min-w-full divide-y-2 divide-gray-200 bg-white text-sm dark:divide-gray-700 dark:bg-gray-800"
-    >
-        <thead class="ltr:text-left rtl:text-right">
-            <tr>
-                {% for title in head %}
-                <th class="whitespace-nowrap px-4 py-2 font-medium text-gray-900 dark:text-white">{{ title }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
+<div
+  class="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-700"
+>
+  <table
+    class="min-w-full divide-y-2 divide-zinc-200 bg-white text-sm dark:divide-zinc-700 dark:bg-zinc-800"
+  >
+    <thead class="ltr:text-left rtl:text-right">
+      <tr>
+        {% for title in head %}
+        <th
+          class="whitespace-nowrap px-4 py-2 font-medium text-zinc-900 dark:text-white"
+        >
+          {{ title }}
+        </th>
+        {% endfor %}
+      </tr>
+    </thead>
 
-        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-            {% for row in body %}
-            <tr>
-                {% for value in row %}
-                <td class="whitespace-nowrap px-4 py-2 text-gray-700 dark:text-white">
-                    {{ value }}
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+      {% for row in body %}
+      <tr>
+        {% for value in row %}
+        <td class="whitespace-nowrap px-4 py-2 text-zinc-700 dark:text-white">
+          {{ value }}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 <div class="mt-4">
-    <h1 class="text-white mb-2">Executed SQL:</h1>
-    <p class="rounded-lg p-4 text-gray-400 dark:bg-gray-800">{{ sql_query }}<p>
+  <h1 class="text-white mb-2">Executed SQL:</h1>
+  <p class="rounded-lg p-4 text-zinc-400 dark:bg-zinc-800">{{ sql_query }}</p>
+  <p></p>
 </div>
