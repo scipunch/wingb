@@ -35,13 +35,24 @@ SqlValue = str | int | bool
 HTTPMethod = Literal["GET", "POST"]
 Htmx = NewType("Htmx", str)
 
-TEMPLATES_DIRECTORY = Path(os.getcwd()) / "templates/"
+TEMPLATES_DIRECTORY = os.path.join(os.getcwd(), "templates/")
 assert os.path.exists(TEMPLATES_DIRECTORY)
+
+# TODO: Make a dependency instead of global
+ADDITIONAL_CONTEXT_PATH = "additional_context.txt"
+ADDITIONAL_CONTEXT = None
+if os.path.exists(ADDITIONAL_CONTEXT_PATH):
+    with open(ADDITIONAL_CONTEXT_PATH) as f:
+        ADDITIONAL_CONTEXT = f.read()
+
+if ADDITIONAL_CONTEXT is None:
+    log.warn("Empty additional context")
 
 
 @runtime_checkable
 class SqlProvider(Protocol):
     def execute(self, query: str) -> list[NamedTuple]: ...
+    def read_database_schema(self) -> list[str]: ...
 
 
 @runtime_checkable
@@ -57,14 +68,16 @@ class LLMProvider(Protocol):
 
 
 def init_jinja2_env() -> jinja2.Environment:
-    return jinja2.Environment(loader=jinja2.PackageLoader("wingb"))
+    return jinja2.Environment(loader=jinja2.PackageLoader("wingb", TEMPLATES_DIRECTORY))
 
 
 def init_sql_provider() -> SqlProvider:
     return PostgreSqlProvider(psycopg.connect(os.environ["DATABASE_URL"]))
 
+
 def init_llm_provider() -> LLMProvider:
     return OpenAILLMProvider(os.environ["OPENAI_API_KEY"])
+
 
 #  end-region   -- Context factory
 
@@ -100,21 +113,37 @@ def post_generate(
         req.send_header("Content-Type", "text/html")
         return Htmx("Form 'prompt' field missing")
 
-    sql_query = prompt
+    database_schema = sql_provider.read_database_schema()
+
+    try:
+        sql_query = llm_provider.convert_to_sql(
+            "\n".join(database_schema),
+            ADDITIONAL_CONTEXT,
+            prompt,
+        )
+        log.info(f"{sql_query=}")
+    except urllib.error.HTTPError as e:
+        msg = f"Failed to send request to LLM with {e=} and body={e.read().decode()}"
+        log.error(msg)
+        req.send_response(HTTPStatus.INTERNAL_SERVER_ERROR)
+        req.send_header("Content-Type", "text/html")
+        return Htmx(msg)
 
     try:
         table = sql_provider.execute(sql_query)
     except Exception as e:
+        msg = f"SQL qeury execution failed with {type(e)}: {e}"
+        log.error(msg)
         req.send_response(HTTPStatus.BAD_REQUEST)
         req.send_header("Content-Type", "text/html")
-        return Htmx(f"SQL qeury execution failed with {e}")
+        return Htmx(msg)
 
     if not table:
         req.send_response(HTTPStatus.BAD_REQUEST)
         req.send_header("Content-Type", "text/html")
         return Htmx("Empty response from database")
 
-    log.info(f"Got {table=}")
+    log.info(f"Got {len(table)} rows")
     req.send_response(HTTPStatus.OK)
     req.send_header("Content-Type", "text/html")
     return Htmx(
@@ -196,11 +225,70 @@ class HTMXRequestHandler(BaseHTTPRequestHandler):
 class PostgreSqlProvider:
     conn: psycopg.Connection[Any]
 
-    def execute(self, query: str) -> list[NamedTuple]:
+    def _execute(self, query: str) -> list[NamedTuple]:
         with self.conn.cursor(row_factory=psycopg.rows.namedtuple_row) as cur:
-            rows = cur.execute(query).fetchall()
+            return cur.execute(query).fetchall()
 
-        return rows
+    def execute(self, query: str) -> list[NamedTuple]:
+        log.info(f"Execting {query=}")
+        return self._execute(query)
+
+    def read_database_schema(self) -> list[str]:
+        sql = """
+WITH table_columns AS (
+    SELECT 
+        table_schema,
+        table_name,
+        column_name,
+        CASE 
+            WHEN data_type = 'character varying' THEN 'VARCHAR(' || character_maximum_length || ')'
+            WHEN data_type = 'character' THEN 'CHAR(' || character_maximum_length || ')'
+            WHEN data_type = 'numeric' THEN 'NUMERIC(' || numeric_precision || ',' || numeric_scale || ')'
+            ELSE data_type
+        END AS column_definition,
+        CASE 
+            WHEN is_nullable = 'NO' THEN ' NOT NULL'
+            ELSE ''
+        END AS null_constraint
+    FROM 
+        information_schema.columns
+    WHERE 
+        table_schema NOT IN ('pg_catalog', 'information_schema')
+),
+foreign_keys AS (
+    SELECT 
+        kcu.table_schema,
+        kcu.table_name,
+        kcu.column_name,
+        ccu.table_schema AS foreign_table_schema,
+        ccu.table_name AS foreign_table_name,
+        ccu.column_name AS foreign_column_name
+    FROM 
+        information_schema.key_column_usage kcu
+    JOIN 
+        information_schema.referential_constraints rc ON kcu.constraint_name = rc.constraint_name
+    JOIN 
+        information_schema.constraint_column_usage ccu ON ccu.constraint_name = rc.unique_constraint_name
+)
+SELECT 
+    'CREATE TABLE ' || tc.table_schema || '.' || tc.table_name || ' (' || 
+    string_agg(tc.column_name || ' ' || tc.column_definition || tc.null_constraint, ', ') || 
+    CASE 
+        WHEN COUNT(fk.foreign_table_name) > 0 THEN ', ' || string_agg('FOREIGN KEY (' || fk.column_name || ') REFERENCES ' || fk.foreign_table_schema || '.' || fk.foreign_table_name || '(' || fk.foreign_column_name || ')', ', ')
+        ELSE ''
+    END || 
+    ');' AS create_table_statement
+FROM 
+    table_columns tc
+LEFT JOIN 
+    foreign_keys fk ON tc.table_schema = fk.table_schema AND tc.table_name = fk.table_name AND tc.column_name = fk.column_name
+GROUP BY 
+    tc.table_schema, tc.table_name
+ORDER BY 
+    tc.table_schema, tc.table_name;"""
+
+        rows = self._execute(sql)
+        return [getattr(row, "create_table_statement") for row in rows]
 
 
 #  end-region   -- Sql
@@ -209,12 +297,15 @@ class PostgreSqlProvider:
 
 
 @dataclasses.dataclass
-class OpenAILLMProvider(Protocol):
+class OpenAILLMProvider:
     openai_api_token: str
 
     def convert_to_sql(
         self, database_schema: str, additional_context: Optional[str], prompt: str
     ) -> str:
+        log.info(
+            f"Converting {prompt=} with {additional_context and len(additional_context)} context"
+        )
         messages = [
             {
                 "role": "developer",
@@ -222,27 +313,54 @@ class OpenAILLMProvider(Protocol):
                               in a PostgreSQL database. Answer the questions by providing
                               raw SQL code that is compatible with the PostgreSQL.""",
             },
+            {
+                "role": "user",
+                "content": f"Here is a database schema:\n```sql\n{database_schema}\n```",
+            },
+            {
+                "role": "user",
+                "content": f"And description for some tables:\n{additional_context}",
+            },
             {"role": "user", "content": prompt},
         ]
         response_format = {
             "type": "json_schema",
-            "json_schema": {"name": "sql_query", "schema": {"type": "string"}},
+            "json_schema": {
+                "name": "sql_query_schema",
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "sql_query": {
+                            "description": "Result SQL query that will be passted to `psycopg.Donnection.execute` method",
+                            "type": "string",
+                        }
+                    },
+                },
+            },
         }
         model = "gpt-4o-mini"
-        data = urllib.parse.urlencode(
-            {"messages": messages, "mode": model, "response_format": response_format}
+        data = json.dumps(
+            {"messages": messages, "model": model, "response_format": response_format}
         ).encode()
         req = urllib.request.Request(
             "https://api.openai.com/v1/chat/completions",
             data=data,
+            method="POST",
             headers={
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {self.openai_api_token}"
-            }
+                "Authorization": f"Bearer {self.openai_api_token}",
+            },
         )
-        resp = urllib.request.urlopen(req)
-        log.info(f"{resp=}")
-        raise NotImplementedError
+        log.info(f"Sending {req=}")
+        with urllib.request.urlopen(req) as resp:
+            resp_body = json.load(resp)
+
+        log.debug(f"ChatGPT {resp_body=}")
+        sql_query = json.loads(resp_body["choices"][0]["message"]["content"])[
+            "sql_query"
+        ]
+        assert isinstance(sql_query, str)
+        return sql_query
 
 
 #  end-region   -- LLM Provider
