@@ -7,6 +7,13 @@
         <script src="https://unpkg.com/htmx.org@2.0.3" integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq" crossorigin="anonymous"></script>
         <script src="https://cdn.tailwindcss.com"></script>
         <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/forms@0.5.9/src/index.min.js"></script>
+        <style type="text/tailwindcss">
+         @layer components {
+             * {
+                 @apply accent-teal-800 focus:accent-teal-900 text-zinc-300;
+             }
+         }
+        </style>        
     </head>
     <body class="bg-gray-100 p-2 md:p-6 dark:bg-zinc-950">
         <div class="container mx-auto relative">
@@ -32,16 +39,18 @@
                         hx-post="/generate"
                         hx-target="#sql-table"
                         hx-indicator="#indicator"
-                        class="group relative inline-flex items-center justify-between overflow-hidden rounded-lg dark:bg-zinc-300 dark:text-zinc-900 px-4 py-2 text-white focus:outline-none focus:ring focus:ring-zinc-500 dark:active:bg-zinc-100"
+                        class="group relative inline-flex items-center justify-between overflow-hidden rounded-lg dark:bg-zinc-300 px-4 py-2 focus:outline-none focus:ring focus:ring-zinc-500 dark:active:bg-zinc-100"
                     >
-                        <span class="absolute -end-full transition-all group-hover:end-4">
+                        <span class="absolute -end-full transition-all group-hover:end-4 text-zinc-900">
                             &gt;
                         </span>
 
-                        <span class="text-sm font-medium transition-all group-hover:me-4">Execute</span>
+                        <span class="text-zinc-900 text-sm font-medium transition-all group-hover:me-4">Execute</span>
                     </button>
                 </div>
             </form>
+
+            <div id="indicator" class="htmx-indicator">Loading..</div>
 
             <!-- Table Component -->
             <div class="p-2 md:p-4">

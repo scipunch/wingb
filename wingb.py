@@ -62,7 +62,6 @@ def init_sql_provider() -> SqlProvider:
 
 def get_root(
     req: BaseHTTPRequestHandler,
-    sql_provider: SqlProvider,
     jinja_env: jinja2.Environment,
 ) -> Htmx:
     req.send_response(HTTPStatus.OK)
@@ -71,7 +70,11 @@ def get_root(
     return Htmx(template.render())
 
 
-def post_generate(req: BaseHTTPRequestHandler, jinja_env: jinja2.Environment) -> Htmx:
+def post_generate(
+    req: BaseHTTPRequestHandler,
+    jinja_env: jinja2.Environment,
+    sql_provider: SqlProvider,
+) -> Htmx:
     length = req.headers.get("content-length")
     try:
         nbytes = int(length or "0")
@@ -85,14 +88,28 @@ def post_generate(req: BaseHTTPRequestHandler, jinja_env: jinja2.Environment) ->
         req.send_header("Content-Type", "text/html")
         return Htmx("Form 'prompt' field missing")
 
+    sql_query = prompt
+
+    try:
+        table = sql_provider.execute(sql_query)
+    except Exception as e:
+        req.send_response(HTTPStatus.BAD_REQUEST)
+        req.send_header("Content-Type", "text/html")
+        return Htmx(f"SQL qeury execution failed with {e}")
+
+    if not table:
+        req.send_response(HTTPStatus.BAD_REQUEST)
+        req.send_header("Content-Type", "text/html")
+        return Htmx("Empty response from database")
+
+    log.info(f"Got {table=}")
     req.send_response(HTTPStatus.OK)
     req.send_header("Content-Type", "text/html")
-    template = jinja_env.get_template("component/sql-table.html")
     return Htmx(
-        template.render(
-            head=["foo", "bar"],
-            body=[["foo1", "bar1"], ["foo2", "bar2"]],
-            sql_query="Some sql query",
+        jinja_env.get_template("component/sql-table.html").render(
+            head=table[0]._fields,
+            body=[tuple(row) for row in table],
+            sql_query=sql_query,
         )
     )
 
@@ -145,10 +162,7 @@ class HTMXRequestHandler(BaseHTTPRequestHandler):
             if arg_class == BaseHTTPRequestHandler:
                 kwargs[arg_name] = self
                 continue
-            log.info(f"{self.context=}, {arg_class=}")
             kwargs[arg_name] = next(d for d in self.context if isinstance(d, arg_class))
-
-        log.info(f"{typehints=}")
 
         content = route_handler(**kwargs)
         content_bytes = None
@@ -174,7 +188,7 @@ class PostgreSqlProvider:
         with self.conn.cursor(row_factory=psycopg.rows.namedtuple_row) as cur:
             rows = cur.execute(query).fetchall()
 
-        raise NotImplementedError
+        return rows
 
 
 #  end-region   -- Sql
