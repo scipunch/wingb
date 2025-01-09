@@ -3,3 +3,5 @@
 Secrets*.toml
 /.env
 /.env.prod
+/__pycache__/
+/additional_context.txt
