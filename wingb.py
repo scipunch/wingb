@@ -8,6 +8,7 @@ import sys
 import typing
 import urllib
 import urllib.parse
+import urllib.request
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -17,6 +18,7 @@ from typing import (
     Literal,
     NamedTuple,
     NewType,
+    Optional,
     Protocol,
     runtime_checkable,
 )
@@ -42,6 +44,13 @@ class SqlProvider(Protocol):
     def execute(self, query: str) -> list[NamedTuple]: ...
 
 
+@runtime_checkable
+class LLMProvider(Protocol):
+    def convert_to_sql(
+        self, database_schema: str, additional_context: Optional[str], prompt: str
+    ) -> str: ...
+
+
 #  end-region   -- Domain
 
 #  begin-region -- Context factory
@@ -54,6 +63,8 @@ def init_jinja2_env() -> jinja2.Environment:
 def init_sql_provider() -> SqlProvider:
     return PostgreSqlProvider(psycopg.connect(os.environ["DATABASE_URL"]))
 
+def init_llm_provider() -> LLMProvider:
+    return OpenAILLMProvider(os.environ["OPENAI_API_KEY"])
 
 #  end-region   -- Context factory
 
@@ -74,6 +85,7 @@ def post_generate(
     req: BaseHTTPRequestHandler,
     jinja_env: jinja2.Environment,
     sql_provider: SqlProvider,
+    llm_provider: LLMProvider,
 ) -> Htmx:
     length = req.headers.get("content-length")
     try:
@@ -123,7 +135,7 @@ class HTMXRequestHandler(BaseHTTPRequestHandler):
         "GET": {"/": get_root},
         "POST": {"/generate": post_generate},
     }
-    context_factory = [init_sql_provider, init_jinja2_env]
+    context_factory = [init_sql_provider, init_jinja2_env, init_llm_provider]
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.context: list[Any] = []
@@ -192,6 +204,48 @@ class PostgreSqlProvider:
 
 
 #  end-region   -- Sql
+
+#  begin-region -- LLM Provider
+
+
+@dataclasses.dataclass
+class OpenAILLMProvider(Protocol):
+    openai_api_token: str
+
+    def convert_to_sql(
+        self, database_schema: str, additional_context: Optional[str], prompt: str
+    ) -> str:
+        messages = [
+            {
+                "role": "developer",
+                "content": """You are a helpful assistant specialising in data analysis
+                              in a PostgreSQL database. Answer the questions by providing
+                              raw SQL code that is compatible with the PostgreSQL.""",
+            },
+            {"role": "user", "content": prompt},
+        ]
+        response_format = {
+            "type": "json_schema",
+            "json_schema": {"name": "sql_query", "schema": {"type": "string"}},
+        }
+        model = "gpt-4o-mini"
+        data = urllib.parse.urlencode(
+            {"messages": messages, "mode": model, "response_format": response_format}
+        ).encode()
+        req = urllib.request.Request(
+            "https://api.openai.com/v1/chat/completions",
+            data=data,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.openai_api_token}"
+            }
+        )
+        resp = urllib.request.urlopen(req)
+        log.info(f"{resp=}")
+        raise NotImplementedError
+
+
+#  end-region   -- LLM Provider
 
 
 def main() -> None:
