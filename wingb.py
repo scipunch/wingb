@@ -10,10 +10,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Literal, NewType, Protocol
 
+import jinja2
 import psycopg2
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", logging.INFO))
 log = logging.getLogger(__name__)
+
+jinja_env = jinja2.Environment(loader=jinja2.PackageLoader("wingb"))
 
 #  begin-region -- Domain
 
@@ -36,9 +39,8 @@ class SqlProvider(Protocol):
 def get_root(req: BaseHTTPRequestHandler) -> Htmx:
     req.send_response(HTTPStatus.OK)
     req.send_header("Content-Type", "text/html")
-    with open(TEMPLATES_DIRECTORY / "page" / "index.html") as f:
-        template = f.read()
-    return Htmx(template)
+    template = jinja_env.get_template("page/index.html")
+    return Htmx(template.render())
 
 
 def post_generate(req: BaseHTTPRequestHandler) -> Htmx:
@@ -55,10 +57,16 @@ def post_generate(req: BaseHTTPRequestHandler) -> Htmx:
         req.send_header("Content-Type", "text/html")
         return Htmx("Form 'prompt' field missing")
 
-    log.info(f"{body=}")
     req.send_response(HTTPStatus.OK)
     req.send_header("Content-Type", "text/html")
-    return Htmx("Response")
+    template = jinja_env.get_template("component/sql-table.html")
+    return Htmx(
+        template.render(
+            head=["foo", "bar"],
+            body=[["foo1", "bar1"], ["foo2", "bar2"]],
+            sql_query="Some sql query",
+        )
+    )
 
 
 class HTMXRequestHandler(BaseHTTPRequestHandler):
