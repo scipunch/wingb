@@ -3,10 +3,10 @@ VENV ?= .venv
 check:
 	ruff format
 	ruff check --fix --select I
-	$(VENV)/bin/mypy --strict --check-untyped-defs main.py
+	$(VENV)/bin/mypy --strict --check-untyped-defs wingb.py
 
 run: check
-	$(VENV)/bin/python main.py
+	$(VENV)/bin/python wingb.py
 
 docker-build:
 	docker build --tag wingb:latest .
