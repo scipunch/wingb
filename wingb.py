@@ -39,7 +39,7 @@ TEMPLATES_DIRECTORY = os.path.join(os.getcwd(), "templates/")
 assert os.path.exists(TEMPLATES_DIRECTORY)
 
 # TODO: Make a dependency instead of global
-ADDITIONAL_CONTEXT_PATH = "additional_context.txt"
+ADDITIONAL_CONTEXT_PATH = os.environ.get("WINGB_ADDITIONAL_CONTEXT", "additional_context.txt")
 ADDITIONAL_CONTEXT = None
 if os.path.exists(ADDITIONAL_CONTEXT_PATH):
     with open(ADDITIONAL_CONTEXT_PATH) as f:

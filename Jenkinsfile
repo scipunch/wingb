@@ -3,6 +3,7 @@ pipeline {
     
     environment {
         DOTENV_FILE = credentials('podcastio-wingb-env')
+        WINGB_ADDITIONAL_CONTEXT = credentials('podcastio-wingb-additional-context')
     }
 
     stages {
