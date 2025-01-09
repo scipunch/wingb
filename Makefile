@@ -1,12 +1,16 @@
+VENV ?= .venv
+
 check:
-	cargo check
+	ruff format
+	ruff check --fix --select I
+	$(VENV)/bin/mypy main.py
 
 precommit:
 	cargo fmt
 	cargo clippy
 
-run:
-	cargo run --bin wingb
+run: check
+	$(VENV)bin/python main.py
 
 watch:
 	cargo watch --quiet  --watch static --watch templates --watch src --shell 'cargo run --bin wingb'
