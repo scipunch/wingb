@@ -1,5 +1,0 @@
-[deploy]
-assets = ["templates/*", "static/*"]
-
-[build]
-assets = ["templates/*", "static/*"]
