@@ -304,7 +304,7 @@ class OpenAILLMProvider:
         self, database_schema: str, additional_context: Optional[str], prompt: str
     ) -> str:
         log.info(
-            f"Converting {prompt=} with {additional_context and len(additional_context)} context"
+            f"Converting {prompt=} with {additional_context and len(additional_context)} symbols of context"
         )
         messages = [
             {
