@@ -4,17 +4,21 @@ import os
 import socket
 import sys
 import urllib
+import urllib.parse
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Protocol, Self
+from typing import Literal, NewType, Protocol
 
 import psycopg2
 
 logging.basicConfig(level=os.environ.get("LOG_LEVEL", logging.INFO))
 log = logging.getLogger(__name__)
 
+#  begin-region -- Domain
+
 SqlValue = str | int | bool
+Htmx = NewType("Htmx", str)
 
 TEMPLATES_DIRECTORY = Path(os.getcwd()) / "templates/"
 assert os.path.exists(TEMPLATES_DIRECTORY)
@@ -24,12 +28,37 @@ class SqlProvider(Protocol):
     def fetch(self, query: str) -> tuple[list[str], list[SqlValue]]: ...
 
 
-def get_root(req: BaseHTTPRequestHandler) -> str:
+#  end-region   -- Domain
+
+#  begin-region -- Web
+
+
+def get_root(req: BaseHTTPRequestHandler) -> Htmx:
     req.send_response(HTTPStatus.OK)
     req.send_header("Content-Type", "text/html")
     with open(TEMPLATES_DIRECTORY / "page" / "index.html") as f:
         template = f.read()
-    return template
+    return Htmx(template)
+
+
+def post_generate(req: BaseHTTPRequestHandler) -> Htmx:
+    length = req.headers.get("content-length")
+    try:
+        nbytes = int(length or "0")
+    except (TypeError, ValueError):
+        nbytes = 0
+    body = urllib.parse.parse_qs(req.rfile.read(nbytes).decode())
+
+    prompt = "\n".join(body.get("prompt", []))
+    if not prompt:
+        req.send_response(HTTPStatus.BAD_REQUEST)
+        req.send_header("Content-Type", "text/html")
+        return Htmx("Form 'prompt' field missing")
+
+    log.info(f"{body=}")
+    req.send_response(HTTPStatus.OK)
+    req.send_header("Content-Type", "text/html")
+    return Htmx("Response")
 
 
 class HTMXRequestHandler(BaseHTTPRequestHandler):
@@ -37,28 +66,27 @@ class HTMXRequestHandler(BaseHTTPRequestHandler):
 
     protocol_version = "HTTP/1.1"
 
-    routes = {
-        "GET": {"/": get_root},
-    }
+    routes = {"GET": {"/": get_root}, "POST": {"/generate": post_generate}}
+
+    def do_POST(self) -> None:
+        content = self.process_request("POST")
+        if content is None:
+            return
+
+        self.wfile.write(content)
 
     def do_GET(self) -> None:
-        content = self.send_head()
+        content = self.process_request("GET")
         if content is None:
             return
 
         self.wfile.write(content)
 
     def do_HEAD(self) -> None:
-        self.send_head()
+        self.process_request("GET")
 
-    def send_head(self) -> bytes | None:
-        length = self.headers.get("content-length")
-        try:
-            nbytes = int(length or "0")
-        except (TypeError, ValueError):
-            nbytes = 0
-
-        route_handler = self.routes["GET"].get(self.path)
+    def process_request(self, method: Literal["GET", "POST"]) -> bytes | None:
+        route_handler = self.routes[method].get(self.path)
 
         if route_handler is None:
             self.send_response(HTTPStatus.NOT_FOUND)
@@ -73,6 +101,9 @@ class HTMXRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
 
         return content_bytes
+
+
+#  end-region   -- Web
 
 
 def main() -> None:
