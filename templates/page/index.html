@@ -13,6 +13,18 @@
                  @apply accent-teal-800 focus:accent-teal-900 dark:text-zinc-300;
              }
          }
+
+         @media (prefers-color-scheme: dark) {
+             html {
+                 color-scheme: dark;
+             }
+         }
+
+         @media (prefers-color-scheme: light) {
+             html {
+                 color-scheme: dark;
+             }
+         }
         </style>
     </head>
     <body class="dark bg-gray-100 p-2 md:p-6 dark:bg-zinc-950" hx-ext="response-targets">
