@@ -17,7 +17,7 @@ docker-run:
 ifndef DOTENV_FILE
 	$(error "DOTENV_FILE is not set, exiting")
 endif
-ifndef WINGB_ADDITIONAL_SESSION
+ifndef WINGB_ADDITIONAL_CONTEXT
 	$(error "WINGB_ADDITIONAL_CONTEXT is not set, exiting")
 endif
 	docker ps | grep $(DOCKER_IMAGE) | awk '{print $$1}' | xargs -r -I {} docker stop {}
