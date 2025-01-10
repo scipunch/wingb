@@ -21,4 +21,4 @@ ifndef WINGB_ADDITIONAL_CONTEXT
 	$(error "WINGB_ADDITIONAL_CONTEXT is not set, exiting")
 endif
 	docker ps | grep $(DOCKER_IMAGE) | awk '{print $$1}' | xargs -r -I {} docker stop {}
-	docker run --name "$(DOCKER_IMAGE)-$$(git rev-parse --short HEAD)-$$(date +%s)" --restart unless-stopped --env-file $$DOTENV_FILE --detach --publish 127.0.0.1:8020:8080 -e $$WINGB_ADDITIONAL_CONTEXT -v $$WINGB_ADDITIONAL_CONTEXT:$$WINGB_ADDITIONAL_CONTEXT:ro  $(DOCKER_IMAGE):latest
+	docker run --name "$(DOCKER_IMAGE)-$$(git rev-parse --short HEAD)-$$(date +%s)" --restart unless-stopped --env-file $$DOTENV_FILE --detach --publish 127.0.0.1:8010:8080 -e $$WINGB_ADDITIONAL_CONTEXT -v $$WINGB_ADDITIONAL_CONTEXT:$$WINGB_ADDITIONAL_CONTEXT:ro  $(DOCKER_IMAGE):latest
