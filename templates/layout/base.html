@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>WingB</title>
+        <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://unpkg.com/htmx-ext-response-targets@2.0.0/response-targets.js"></script>
+        <style type="text/tailwindcss">
+         @layer components {
+             * {
+                 @apply accent-teal-800 focus:accent-teal-900 dark:text-zinc-300;
+             }
+         }
+
+         @media (prefers-color-scheme: dark) {
+             html {
+                 color-scheme: dark;
+             }
+         }
+
+         @media (prefers-color-scheme: light) {
+             html {
+                 color-scheme: dark;
+             }
+         }
+        </style>
+    </head>
+    <body class="dark bg-gray-100 p-2 md:p-6 dark:bg-zinc-950" hx-ext="response-targets">
+        {% block body %}{% endblock %}
+    </body>
+</html>
