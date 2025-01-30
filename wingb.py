@@ -1,5 +1,4 @@
 import dataclasses
-import inspect
 import json
 import logging
 import os
@@ -11,7 +10,6 @@ import urllib.parse
 import urllib.request
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -39,14 +37,16 @@ TEMPLATES_DIRECTORY = os.path.join(os.getcwd(), "templates/")
 assert os.path.exists(TEMPLATES_DIRECTORY)
 
 # TODO: Make a dependency instead of global
-ADDITIONAL_CONTEXT_PATH = os.environ.get("WINGB_ADDITIONAL_CONTEXT", "additional_context.txt")
+ADDITIONAL_CONTEXT_PATH = os.environ.get(
+    "WINGB_ADDITIONAL_CONTEXT", "additional_context.txt"
+)
 ADDITIONAL_CONTEXT = None
 if os.path.exists(ADDITIONAL_CONTEXT_PATH):
     with open(ADDITIONAL_CONTEXT_PATH) as f:
         ADDITIONAL_CONTEXT = f.read()
 
 if ADDITIONAL_CONTEXT is None:
-    log.warn("Empty additional context")
+    log.warning("Empty additional context")
 
 
 @runtime_checkable
@@ -71,12 +71,23 @@ def init_jinja2_env() -> jinja2.Environment:
     return jinja2.Environment(loader=jinja2.PackageLoader("wingb", TEMPLATES_DIRECTORY))
 
 
+# TODO: Check on startup
 def init_sql_provider() -> SqlProvider:
-    return PostgreSqlProvider(psycopg.connect(os.environ["DATABASE_URL"]))
+    database_url = os.environ["DATABASE_URL"]
+    match database_url.split("://"):
+        case ["dummy"]:
+            return DummySqlProvider()
+        case ["postgresql", *_]:
+            return PostgreSqlProvider(psycopg.connect(database_url))
+        case unknown:
+            raise ValueError(f"Unknown database provider {unknown}")
 
 
 def init_llm_provider() -> LLMProvider:
-    return OpenAILLMProvider(os.environ["OPENAI_API_KEY"])
+    if os.environ.get("USE_DUMMY_LLM"):
+        return DummyLLMProvider()
+    else:
+        return OpenAILLMProvider(os.environ["OPENAI_API_KEY"])
 
 
 #  end-region   -- Context factory
@@ -291,6 +302,23 @@ ORDER BY
         return [getattr(row, "create_table_statement") for row in rows]
 
 
+class DummySqlProvider:
+    class _Row(NamedTuple):
+        foo: str
+        bar: int
+        baz: bool
+
+    def __init__(self):
+        log.warning("Using dummy sql provider")
+
+    def execute(self, query: str) -> list[NamedTuple]:
+        log.info(f"Execting {query=}")
+        return [DummySqlProvider._Row("hello", 7, True) for _ in range(100)]
+
+    def read_database_schema(self) -> list[str]:
+        return []
+
+
 #  end-region   -- Sql
 
 #  begin-region -- LLM Provider
@@ -361,6 +389,16 @@ class OpenAILLMProvider:
         ]
         assert isinstance(sql_query, str)
         return sql_query
+
+
+class DummyLLMProvider:
+    def __init__(self):
+        log.warning("Using dummy LLM provider")
+
+    def convert_to_sql(
+        self, database_schema: str, additional_context: Optional[str], prompt: str
+    ) -> str:
+        return ""
 
 
 #  end-region   -- LLM Provider

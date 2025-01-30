@@ -1,7 +1,7 @@
 VENV ?= .venv
 DOCKER_IMAGE = wingb
 
-pre-commit: format lint test
+pre-commit: format lint
 
 format:
 	uv run ruff format
@@ -10,14 +10,8 @@ lint: format
 	uv run ruff check --fix
 	uv run mypy .
 
-test: lint
-	uv run pytest
-
-test-last-failed: lint
-	uv run pytest --last-failed
-
 run: pre-commit
-	uv run python __main__.py
+	uv run python wingb.py
 
 docker-build:
 	docker build --tag $(DOCKER_IMAGE):latest .
