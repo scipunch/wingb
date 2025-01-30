@@ -1,13 +1,23 @@
 VENV ?= .venv
 DOCKER_IMAGE = wingb
 
-check:
-	ruff format
-	ruff check --fix --select I
-	$(VENV)/bin/mypy --strict --check-untyped-defs wingb.py
+pre-commit: format lint test
 
-run: check
-	$(VENV)/bin/python wingb.py
+format:
+	uv run ruff format
+
+lint: format
+	uv run ruff check --fix
+	uv run mypy .
+
+test: lint
+	uv run pytest
+
+test-last-failed: lint
+	uv run pytest --last-failed
+
+run: pre-commit
+	uv run python __main__.py
 
 docker-build:
 	docker build --tag $(DOCKER_IMAGE):latest .

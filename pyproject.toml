@@ -1,0 +1,16 @@
+[project]
+name = "wingb"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.org"
+requires-python = ">=3.13"
+dependencies = [
+    "jinja2>=3.1.5",
+    "psycopg>=3.2.4",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.14.1",
+    "ruff>=0.9.3",
+]
