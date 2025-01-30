@@ -83,6 +83,9 @@
 
  document.body.addEventListener("keydown", (e) => {
      if (e.key === "Escape") {
+         if (currentFocusIdx === -1) {
+             return
+         }
          unselectSuggestion(currentFocusIdx)
          currentFocusIdx = -1
      }
