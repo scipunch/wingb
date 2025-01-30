@@ -1,0 +1,78 @@
+<script>
+ document.body.addEventListener("keydown", (e) => {
+     const cmd = document.getElementById("cmd")
+     const cmdIsVisible = cmd.style.visibility === "visible";
+     if (e.ctrlKey && e.key === "k") {
+         e.preventDefault()
+         if (cmdIsVisible) {
+             cmd.style.visibility = "hidden"
+         } else {
+             cmd.style.visibility = "visible"
+             document.getElementById("cmd-input").focus()
+         }
+     }
+
+     if (e.key === "Escape" && cmdIsVisible) {
+         e.preventDefault()
+         cmd.style.visibility = "hidden"
+     }
+ });
+</script>
+
+<div id="cmd" style="visibility: hidden" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[512px] h-64 bg-black">
+    <input id="cmd-input" placeholder="Command" class="w-full border-1 border-white bg-black mb-2" />
+    <ul id="cmd-suggestions">
+    </ul>
+</div>
+
+<script>
+ const commands = [
+     {
+         title: "New Prompt"
+     },
+     {
+         title: "Prompt history"
+     },
+     {
+         title: "Create action"
+     },
+     {
+         title: "Help"
+     }
+ ];
+
+ const cmdSuggestionsWrapper = document.getElementById("cmd-suggestions")
+ const cmdSuggestions = cmdSuggestionsWrapper.getElementsByTagName("li")
+ const updateSuggestions = (commands) => cmdSuggestionsWrapper.innerHTML = commands.map((cmd) => `<li>${cmd.title}</li>`).join("")
+
+ updateSuggestions(commands)
+
+ document.getElementById("cmd-input").addEventListener("input", ({ target: { value }}) => {
+     updateSuggestions(commands.filter((cmd) => cmd.title.toLowerCase().includes(value)))
+ })
+
+ const cmdInput = document.getElementById("cmd-input")
+ let currentFocusIdx = -1;
+ const selectedSuggestionClass = "text-red-500"
+ const unselectSuggestion = (idx) => cmdSuggestions[idx].classList.remove(selectedSuggestionClass)
+ const selectSuggestion = (idx) => cmdSuggestions[idx].classList.add(selectedSuggestionClass)
+ cmdInput.addEventListener("keydown", (e) => {
+     if (e.key === "ArrowDown" || (e.ctrlKey && e.key === "n")) {
+         e.preventDefault()
+         if (currentFocusIdx === cmdSuggestions.length - 1) {
+             return
+         }
+         if (currentFocusIdx > -1) unselectSuggestion(currentFocusIdx)
+         currentFocusIdx++
+         selectSuggestion(currentFocusIdx)
+     } else if (e.key === "ArrowUp" || (e.ctrlKey && e.key === "p")) {
+         e.preventDefault()
+         if (currentFocusIdx === -1) {
+             return
+         }
+         unselectSuggestion(currentFocusIdx)
+         currentFocusIdx--
+         if (currentFocusIdx >= 0) selectSuggestion(currentFocusIdx)
+     }
+ })
+</script>

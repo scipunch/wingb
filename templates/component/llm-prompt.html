@@ -1,0 +1,35 @@
+<form class="p-2 md:p-4"
+      hx-post="/generate"
+      hx-target={{hx-target-success}}
+      hx-indicator="#hx-indicator"
+      hx-target-error="#hx-target-error"
+>
+    <label
+        for="prompt"
+        class="block overflow-hidden rounded-md border border-zinc-200 px-3 py-2 shadow-sm focus-within:border-zinc-500 focus-within:ring-1 focus-within:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900"
+    >
+        <span class="text-lg font-medium text-zinc-700 dark:text-zinc-200">Prompt</span>
+        <textarea
+            required
+            id="prompt"
+            name="prompt"
+            rows="5"
+            autofocus="true"
+            class="mt-1 w-full border-none bg-transparent p-0 focus:border-transparent focus:outline-none focus:ring-0 sm:text-sm dark:text-white"
+        ></textarea>
+    </label>
+    <div class="block mb-4"></div>
+    <div class="flex items-center space-x-4">
+        <button
+            type="submit"
+            class="group relative inline-flex items-center justify-between overflow-hidden rounded-lg dark:bg-zinc-300 px-4 py-2 focus:outline-none focus:ring focus:ring-zinc-500 dark:active:bg-zinc-100"
+        >
+            <span class="absolute -end-full transition-all group-hover:end-4 text-zinc-900">
+                &gt;
+            </span>
+
+            <span class="text-zinc-900 text-sm font-medium transition-all group-hover:me-4">Execute</span>
+        </button>
+    </div>
+    <div id="indicator" class="htmx-indicator mt-2">Loading..</div>
+</form>
