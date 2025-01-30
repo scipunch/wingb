@@ -53,7 +53,7 @@
 
  const cmdInput = document.getElementById("cmd-input")
  let currentFocusIdx = -1;
- const selectedSuggestionClass = "text-red-500"
+ const selectedSuggestionClass = "text-blue-200"
  const unselectSuggestion = (idx) => cmdSuggestions[idx].classList.remove(selectedSuggestionClass)
  const selectSuggestion = (idx) => cmdSuggestions[idx].classList.add(selectedSuggestionClass)
  cmdInput.addEventListener("keydown", (e) => {
