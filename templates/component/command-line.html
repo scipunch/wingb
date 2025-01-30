@@ -40,22 +40,27 @@
          title: "Help"
      }
  ];
+ const selectedSuggestionClass = "text-blue-200"
+ let currentFocusIdx = -1;
 
  const cmdSuggestionsWrapper = document.getElementById("cmd-suggestions")
  const cmdSuggestions = cmdSuggestionsWrapper.getElementsByTagName("li")
+ const cmdInput = document.getElementById("cmd-input")
+
  const updateSuggestions = (commands) => cmdSuggestionsWrapper.innerHTML = commands.map((cmd) => `<li>${cmd.title}</li>`).join("")
+ const unselectSuggestion = (idx) => cmdSuggestions[idx].classList.remove(selectedSuggestionClass)
+ const selectSuggestion = (idx) => cmdSuggestions[idx].classList.add(selectedSuggestionClass)
 
  updateSuggestions(commands)
 
  document.getElementById("cmd-input").addEventListener("input", ({ target: { value }}) => {
      updateSuggestions(commands.filter((cmd) => cmd.title.toLowerCase().includes(value)))
+     if (value.length > 0 && cmdSuggestions.length > 0) {
+         selectSuggestion(0)
+         currentFocusIdx = 0
+     }
  })
 
- const cmdInput = document.getElementById("cmd-input")
- let currentFocusIdx = -1;
- const selectedSuggestionClass = "text-blue-200"
- const unselectSuggestion = (idx) => cmdSuggestions[idx].classList.remove(selectedSuggestionClass)
- const selectSuggestion = (idx) => cmdSuggestions[idx].classList.add(selectedSuggestionClass)
  cmdInput.addEventListener("keydown", (e) => {
      if (e.key === "ArrowDown" || (e.ctrlKey && e.key === "n")) {
          e.preventDefault()
@@ -73,6 +78,13 @@
          unselectSuggestion(currentFocusIdx)
          currentFocusIdx--
          if (currentFocusIdx >= 0) selectSuggestion(currentFocusIdx)
+     }
+ })
+
+ document.body.addEventListener("keydown", (e) => {
+     if (e.key === "Escape") {
+         unselectSuggestion(currentFocusIdx)
+         currentFocusIdx = -1
      }
  })
 </script>
